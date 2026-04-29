@@ -29,74 +29,113 @@ app.post('/api/analyze', async (req, res) => {
         return res.status(400).json({ error: "URL is required" });
     }
 
-    // Check if RapidAPI Key is provided
-    if (!process.env.RAPIDAPI_KEY || process.env.RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-        console.log("Using Simulation Mode (No API key provided)");
-        // Add a delay to simulate network request
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        return res.json(simulationData);
-    }
-
     try {
-        // Extraer el shortcode de la URL de Instagram
-        // Formatos comunes: /p/SHORTCODE/ o /reel/SHORTCODE/
-        const urlParts = url.split('/');
-        const shortcode = urlParts.find((part, index) => 
-            index > 0 && (urlParts[index-1] === 'p' || urlParts[index-1] === 'reel' || urlParts[index-1] === 'reels')
-        ) || urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+        let endpoint = '';
+        let params = {};
+        let platform = '';
 
-        console.log("Analizando shortcode:", shortcode);
+        // DETECCIÓN DE PLATAFORMA
+        if (url.includes('instagram.com')) {
+            platform = 'instagram';
+            const urlParts = url.split('?')[0].split('/');
+            const shortcode = urlParts.find((part, index) => 
+                index > 0 && (urlParts[index-1] === 'p' || urlParts[index-1] === 'reel' || urlParts[index-1] === 'reels')
+            ) || urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+            
+            endpoint = '/instagram/v3/media/post/details';
+            params = { shortcode, renderableFormats: '720p,highres' };
+        } 
+
+        else if (url.includes('tiktok.com')) {
+            platform = 'tiktok';
+            endpoint = '/tiktok/v3/post/details';
+            params = { url: url.split('?')[0] };
+        }
+        else if (url.includes('facebook.com') || url.includes('fb.watch')) {
+            platform = 'facebook';
+            endpoint = '/facebook/v3/post/details';
+            params = { url: url.split('?')[0] };
+        }
+        else {
+            return res.status(400).json({ error: "Plataforma no soportada aún." });
+        }
+
+        console.log(`Analizando ${platform}:`, url);
 
         const options = {
             method: 'GET',
-            url: `https://${process.env.RAPIDAPI_HOST}/instagram/v3/media/post/details`,
-            params: { 
-                shortcode: shortcode,
-                renderableFormats: '720p,highres'
-            },
+            url: `https://${process.env.RAPIDAPI_HOST}${endpoint}`,
+            params: params,
             headers: {
                 'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
                 'X-RapidAPI-Host': process.env.RAPIDAPI_HOST
             }
         };
 
-        console.log("Llamando a:", options.url);
         const response = await axios.request(options);
         
-        // --- LOG DE DEPURACIÓN ---
-        // console.log("Respuesta de la API:", JSON.stringify(response.data, null, 2));
-        // -------------------------
+        console.log(`--- RESPUESTA DE LA API (${platform.toUpperCase()}) ---`);
+        const data = response.data;
+        // console.log(JSON.stringify(data, null, 2)); // Descomentar para debug profundo
+        let rawVideo = '';
+        let rawThumb = '';
 
-        // Mapeo exacto según tu respuesta de terminal
-        const contents = response.data.contents && response.data.contents[0];
-        const videos = contents && contents.videos;
-        const metadata = response.data.metadata;
-
-        // Buscamos el video de mayor calidad (usualmente el primero en la lista de 'videos')
-        const rawVideoLink = (videos && videos.length > 0) ? videos[0].url : null;
-        const rawThumbLink = metadata ? metadata.thumbnailUrl : (contents && contents.thumbnailUrl);
-
-        // Usamos nuestro propio servidor como proxy para evitar bloqueos y forzar descarga
-        const videoLink = rawVideoLink ? `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawVideoLink)}&filename=SnapSave_${shortcode}.mp4` : null;
-        const thumbLink = rawThumbLink ? `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawThumbLink)}&isImage=true` : null;
-
-        console.log("Video procesado para descarga directa:", videoLink ? "SÍ" : "NO");
-
-        const formattedResponse = {
-            status: true,
-            result: [
-                {
-                    url: videoLink,
-                    thumb: thumbLink,
-                    type: "video/mp4"
+        // FUNCIÓN DE BÚSQUEDA EXHAUSTIVA
+        function findVideoUrl(obj) {
+            if (!obj) return null;
+            // Si es un string y parece un video de red social o CDN
+            if (typeof obj === 'string' && (obj.includes('video') || obj.includes('.mp4') || obj.includes('fbcdn') || obj.includes('tiktokv'))) {
+                if (obj.startsWith('http')) return obj;
+            }
+            // Si es un objeto o array, seguimos buscando
+            if (typeof obj === 'object') {
+                for (let key in obj) {
+                    const found = findVideoUrl(obj[key]);
+                    if (found) return found;
                 }
-            ]
-        };
+            }
+            return null;
+        }
 
-        res.json(formattedResponse);
+        // 1. Intentamos el mapeo estándar
+        if (platform === 'instagram' || platform === 'tiktok' || platform === 'facebook') {
+            const contents = data.contents && data.contents[0];
+            const videos = contents && contents.videos;
+            rawVideo = (videos && videos.length > 0) ? videos[0].url : null;
+            rawThumb = data.metadata ? data.metadata.thumbnailUrl : (contents && contents.thumbnailUrl);
+        }
+        if (!rawVideo) {
+            console.log("Mapeo estándar falló. Iniciando búsqueda agresiva...");
+            rawVideo = findVideoUrl(data);
+        }
+
+        // 3. Buscar miniatura si no hay
+        if (!rawThumb) {
+            if (data.thumbnail) rawThumb = data.thumbnail;
+            else if (data.picture) rawThumb = data.picture;
+        }
+
+        console.log(`Video Final Encontrado:`, rawVideo ? "SÍ" : "NO");
+
+        if (!rawVideo) {
+            return res.status(404).json({ 
+                error: "No se encontró un link de descarga.",
+                debug: "La API respondió pero no se detectó un video compatible."
+            });
+        }
+
+        let videoLink = `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawVideo)}&filename=SnapSave_${platform}.mp4&platform=${platform}`;
+        let thumbLink = rawThumb ? `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawThumb)}&isImage=true` : null;
+
+        res.json({
+            status: true,
+            result: [{ url: videoLink, thumb: thumbLink, type: "video/mp4" }]
+        });
+
     } catch (error) {
         if (error.response) {
             console.error("Error de la API (Status):", error.response.status);
+            console.error("Detalle del error:", JSON.stringify(error.response.data, null, 2));
         } else {
             console.error("Error local:", error.message);
         }
@@ -107,24 +146,33 @@ app.post('/api/analyze', async (req, res) => {
     }
 });
 
-// NUEVA RUTA: Proxy para forzar descarga y evitar bloqueos de Instagram
+// NUEVA RUTA: Proxy para forzar descarga y evitar bloqueos de Instagram/TikTok/Facebook
 app.get('/api/download', async (req, res) => {
-    const { url, filename, isImage } = req.query;
+    const { url, filename, isImage, platform } = req.query;
 
     if (!url) return res.status(400).send("URL is required");
 
     try {
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.google.com/',
+            'Origin': 'https://www.google.com/'
+        };
+
+        // Intentamos una técnica de "streaming" directo
         const response = await axios({
             method: 'get',
             url: url,
             responseType: 'stream',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+            headers: headers,
+            timeout: 15000
         });
 
         if (isImage) {
             res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
         } else {
             res.setHeader('Content-Disposition', `attachment; filename="${filename || 'video.mp4'}"`);
             res.setHeader('Content-Type', 'video/mp4');
@@ -133,7 +181,16 @@ app.get('/api/download', async (req, res) => {
         response.data.pipe(res);
     } catch (error) {
         console.error("Download Proxy Error:", error.message);
-        res.status(500).send("Error al procesar el archivo");
+        
+        // --- EL TRUCO FINAL: REDIRECCIÓN ---
+        // Si el proxy falla con 403, redirigimos al usuario al link directo. 
+        // A veces el link directo funciona en el navegador del usuario aunque falle en el servidor.
+        if (error.response && error.response.status === 403) {
+            console.log("Detectado 403. Redirigiendo a link directo como fallback...");
+            return res.redirect(url);
+        }
+
+        res.status(500).send("No se pudo procesar la descarga. El enlace ha expirado o es privado.");
     }
 });
 

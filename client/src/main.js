@@ -40,12 +40,7 @@ const analyzeUrl = async () => {
     const url = urlInput.value.trim();
 
     if (!url) {
-        alert("Por favor, ingresa un link válido de Instagram.");
-        return;
-    }
-
-    if (!url.includes('instagram.com')) {
-        alert("El link debe ser de instagram.com");
+        alert("Por favor, ingresa un link válido de TikTok, Facebook o Instagram.");
         return;
     }
 

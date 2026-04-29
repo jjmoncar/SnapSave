@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapSave - Descarga Videos de Instagram HD</title>
-    <meta name="description" content="Descarga videos de Instagram, Reels y fotos gratis y en alta calidad con SnapSave. Sin marca de agua y rápido.">
+    <title>SnapSave - Descarga Videos de Instagram, TikTok y Facebook HD</title>
+    <meta name="description" content="Descarga videos de Instagram, TikTok y Facebook gratis y en alta calidad con SnapSave. Sin marca de agua y rápido.">
     
     <!-- ADSTERRA SOCIAL BAR PLACEHOLDER -->
     <!-- <script type='text/javascript' src='//your-social-bar-script.js'></script> -->
@@ -15,11 +15,12 @@
     <nav class="p-6">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
                 <span class="text-2xl font-bold tracking-tight text-white uppercase tracking-widest">Capture</span>
-            <div class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
-                <a href="#" class="hover:text-white transition-colors">Instagram Downloader</a>
-                <a href="#" class="hover:text-white transition-colors">Reels Downloader</a>
-                <a href="#" class="hover:text-white transition-colors">Stories</a>
-            </div>
+            <nav class="hidden md:flex space-x-8">
+
+                <a href="#" class="text-white hover:text-primary transition-colors font-medium">Facebook</a>
+                <a href="#" class="text-white hover:text-primary transition-colors font-medium">TikTok</a>
+                <a href="#" class="text-primary font-bold border-b-2 border-primary">Instagram</a>
+            </nav>
         </div>
     </nav>
 
@@ -30,8 +31,8 @@
             <h1 class="text-6xl md:text-8xl font-extrabold text-white tracking-tighter leading-tight font-display">
                 InstaFetch<span class="text-white">.</span>
             </h1>
-            <p class="text-lg text-on-surface-variant max-w-2xl mx-auto font-medium">
-                Descargas de alta fidelidad desde Instagram en segundos. Sin anuncios intrusivos, solo el contenido que amas.
+            <p class="text-lg text-slate-400 max-w-2xl mx-auto font-medium">
+                Descargas en HD de TikTok, Facebook e Instagram en segundos.
             </p>
         </div>
 
@@ -43,7 +44,7 @@
                     <input 
                         type="text" 
                         id="urlInput"
-                        placeholder="Pega el link de Instagram aquí..."
+                        placeholder="Pega el link de TikTok, FB o Instagram aquí..."
                         class="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-5 px-6 pr-48 text-white placeholder:text-slate-500 focus:outline-none input-glow transition-all"
                     >
                     <button 
@@ -64,7 +65,7 @@
             <!-- Loading State -->
             <div id="loading" class="hidden absolute inset-0 glass-morphism rounded-3xl flex flex-col items-center justify-center space-y-4 z-10">
                 <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-on-surface-variant font-medium">Procesando video...</p>
+                <p class="text-on-surface-variant font-medium">Procesando contenido...</p>
             </div>
         </div>
 
