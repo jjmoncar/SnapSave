@@ -124,7 +124,9 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        let videoLink = `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawVideo)}&filename=SnapSave_${platform}.mp4&platform=${platform}`;
+        const randomName = Math.random().toString(36).substring(2, 14) + Math.random().toString(36).substring(2, 14);
+        const fileName = randomName.substring(0, 12);
+        let videoLink = `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawVideo)}&filename=${fileName}.mp4&platform=${platform}`;
         let thumbLink = rawThumb ? `http://localhost:${PORT}/api/download?url=${encodeURIComponent(rawThumb)}&isImage=true` : null;
 
         res.json({

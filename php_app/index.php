@@ -18,6 +18,9 @@ $t = $languages[$current_lang];
 <html lang="<?php echo $current_lang; ?>">
 
 <head>
+
+    <script>(function (s) { s.dataset.zone = '10969272', s.src = 'https://al5sm.com/tag.min.js' })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $t['title']; ?></title>
@@ -111,27 +114,43 @@ $t = $languages[$current_lang];
     <!-- Navbar -->
     <nav class="p-6">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <span class="text-2xl font-bold tracking-tight text-white uppercase tracking-widest">Capture</span>
+            <span class="text-2xl font-bold tracking-tight text-white uppercase tracking-widest"><a
+                    href="https://omg10.com/4/10969248">Capture</a></span>
             <div class="flex items-center space-x-4 md:space-x-8">
                 <nav class="hidden lg:flex space-x-8">
-                    <a href="#" class="text-white hover:text-primary transition-colors font-medium"><?php echo $t['nav_facebook']; ?></a>
-                    <a href="#" class="text-white hover:text-primary transition-colors font-medium"><?php echo $t['nav_tiktok']; ?></a>
-                    <a href="#" class="text-primary font-bold border-b-2 border-primary"><?php echo $t['nav_instagram']; ?></a>
+                    <a href="#"
+                        class="text-white hover:text-primary transition-colors font-medium"><?php echo $t['nav_facebook']; ?></a>
+                    <a href="#"
+                        class="text-white hover:text-primary transition-colors font-medium"><?php echo $t['nav_tiktok']; ?></a>
+                    <a href="#"
+                        class="text-primary font-bold border-b-2 border-primary"><?php echo $t['nav_instagram']; ?></a>
                 </nav>
-                
+
                 <!-- Language Selector -->
                 <div class="relative group">
-                    <button class="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/50 px-4 py-2 rounded-xl border border-slate-700/50 transition-all text-sm font-medium text-white">
+                    <button
+                        class="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/50 px-4 py-2 rounded-xl border border-slate-700/50 transition-all text-sm font-medium text-white">
                         <span class="uppercase"><?php echo $current_lang; ?></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div class="absolute right-0 mt-2 w-32 rounded-xl lang-dropdown opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 shadow-2xl overflow-hidden border border-white/5">
-                        <a href="?lang=en" class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇺🇸 English</a>
-                        <a href="?lang=es" class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇪🇸 Español</a>
-                        <a href="?lang=pt" class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇧🇷 Português</a>
-                        <a href="?lang=fr" class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors">🇫🇷 Français</a>
+                    <div
+                        class="absolute right-0 mt-2 w-32 rounded-xl lang-dropdown opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 shadow-2xl overflow-hidden border border-white/5">
+                        <a href="?lang=en"
+                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇺🇸
+                            English</a>
+                        <a href="?lang=es"
+                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇪🇸
+                            Español</a>
+                        <a href="?lang=pt"
+                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇧🇷
+                            Português</a>
+                        <a href="?lang=fr"
+                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors">🇫🇷
+                            Français</a>
                     </div>
                 </div>
             </div>
@@ -175,7 +194,8 @@ $t = $languages[$current_lang];
                             'params': {}
                         };
                     </script>
-                    <script src="https://www.highperformanceformat.com/f88f153afa3d18c40ae849fc4ba1ece9/invoke.js"></script>
+                    <script
+                        src="https://www.highperformanceformat.com/f88f153afa3d18c40ae849fc4ba1ece9/invoke.js"></script>
                 </div>
             </div>
 
@@ -223,7 +243,8 @@ $t = $languages[$current_lang];
                                 'params': {}
                             };
                         </script>
-                        <script src="https://www.highperformanceformat.com/dd299b46bfe1dbaf276b2827e60c30d4/invoke.js"></script>
+                        <script
+                            src="https://www.highperformanceformat.com/dd299b46bfe1dbaf276b2827e60c30d4/invoke.js"></script>
                     </div>
                 </div>
             </div>
@@ -232,17 +253,23 @@ $t = $languages[$current_lang];
         <!-- Features Grid -->
         <div class="grid md:grid-cols-3 gap-6 mt-20">
             <div class="glass-morphism p-6 rounded-2xl space-y-4">
-                <div class="w-12 h-12 bg-pink-500/10 text-primary rounded-lg flex items-center justify-center font-bold">01</div>
+                <div
+                    class="w-12 h-12 bg-pink-500/10 text-primary rounded-lg flex items-center justify-center font-bold">
+                    01</div>
                 <h4 class="text-lg font-bold text-white"><?php echo $t['feature_1_title']; ?></h4>
                 <p class="text-slate-400 text-sm leading-relaxed"><?php echo $t['feature_1_desc']; ?></p>
             </div>
             <div class="glass-morphism p-6 rounded-2xl space-y-4">
-                <div class="w-12 h-12 bg-orange-500/10 text-secondary rounded-lg flex items-center justify-center font-bold">02</div>
+                <div
+                    class="w-12 h-12 bg-orange-500/10 text-secondary rounded-lg flex items-center justify-center font-bold">
+                    02</div>
                 <h4 class="text-lg font-bold text-white"><?php echo $t['feature_2_title']; ?></h4>
                 <p class="text-slate-400 text-sm leading-relaxed"><?php echo $t['feature_2_desc']; ?></p>
             </div>
             <div class="glass-morphism p-6 rounded-2xl space-y-4">
-                <div class="w-12 h-12 bg-pink-500/10 text-primary rounded-lg flex items-center justify-center font-bold">03</div>
+                <div
+                    class="w-12 h-12 bg-pink-500/10 text-primary rounded-lg flex items-center justify-center font-bold">
+                    03</div>
                 <h4 class="text-lg font-bold text-white"><?php echo $t['feature_3_title']; ?></h4>
                 <p class="text-slate-400 text-sm leading-relaxed"><?php echo $t['feature_3_desc']; ?></p>
             </div>
@@ -256,7 +283,8 @@ $t = $languages[$current_lang];
             <div class="flex gap-6 text-sm text-slate-400">
                 <a href="terms.php" class="hover:text-white"><?php echo $t['footer_terms']; ?></a>
                 <a href="privacy.php" class="hover:text-white"><?php echo $t['footer_privacy']; ?></a>
-                <a href="mailto:emprendedordigital1970@gmail.com" class="hover:text-white"><?php echo $t['footer_contact']; ?></a>
+                <a href="mailto:emprendedordigital1970@gmail.com"
+                    class="hover:text-white"><?php echo $t['footer_contact']; ?></a>
             </div>
         </div>
     </footer>

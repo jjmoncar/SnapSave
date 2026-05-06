@@ -1,6 +1,6 @@
 <?php
 $url = $_GET['url'] ?? '';
-$filename = $_GET['filename'] ?? 'video.mp4';
+$filename = $_GET['filename'] ?? (substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 12) . ".mp4");
 $isImage = isset($_GET['isImage']);
 
 if (!$url) {

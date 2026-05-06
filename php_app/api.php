@@ -67,7 +67,9 @@ if ($err) {
     $rawThumb = $data['metadata']['thumbnailUrl'] ?? ($contents['thumbnailUrl'] ?? null);
 
     if ($rawVideo) {
-        $videoProxy = "download.php?url=" . urlencode($rawVideo) . "&filename=SnapSave_$platform.mp4";
+        // Generar un nombre aleatorio de 12 caracteres (mezcla de números y letras)
+        $randomName = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 12);
+        $videoProxy = "download.php?url=" . urlencode($rawVideo) . "&filename=" . $randomName . ".mp4";
         $thumbProxy = $rawThumb ? "download.php?url=" . urlencode($rawThumb) . "&isImage=true" : null;
         
         echo json_encode([
