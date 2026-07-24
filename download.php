@@ -7,6 +7,10 @@ if (!$url) {
     die("URL is required");
 }
 
+if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+    die("Invalid URL");
+}
+
 // Configurar cabeceras según el tipo de contenido
 header("Content-Type: " . ($isImage ? "image/jpeg" : "video/mp4"));
 

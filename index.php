@@ -30,19 +30,29 @@ $t = $languages[$current_lang];
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        outfit: ["Outfit", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                        display: ["Plus Jakarta Sans", "sans-serif"],
                     },
                     colors: {
                         primary: '#ff8aa5',
                         secondary: '#ffb147',
-                        surface: '#0a0a0a',
+                        surface: '#0e0e0e',
+                        'surface-container-lowest': '#000000',
+                        'surface-container-low': '#131313',
+                        'surface-container': '#1a1a19',
+                        'surface-container-high': '#20201f',
+                        'surface-container-highest': '#262626',
+                        'surface-bright': '#2c2c2c',
+                        'on-surface': '#ffffff',
+                        'on-surface-variant': '#adaaaa',
+                        'outline-variant': '#484847',
                     }
                 }
             }
@@ -51,39 +61,41 @@ $t = $languages[$current_lang];
 
     <style>
         :root {
-            font-family: 'Outfit', sans-serif;
-            background-color: #0a0a0a;
-            color: #f8fafc;
+            background-color: #0e0e0e;
+            color: #ffffff;
         }
 
         body {
             margin: 0;
             min-height: 100vh;
-            background: radial-gradient(circle at top right, #1e1515 0%, #0e0e0e 50%, #050505 100%);
+            background-color: #0e0e0e;
         }
 
         .glass-morphism {
-            background: rgba(26, 26, 26, 0.4);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            background: rgba(26, 26, 25, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: none;
+        }
+
+        .ambient-shadow {
+            box-shadow: 0 40px 60px rgba(255, 138, 165, 0.06);
         }
 
         .glow-btn {
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
+            box-shadow: 0 20px 40px rgba(255, 138, 165, 0.1);
         }
 
         .glow-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px rgba(255, 138, 165, 0.3);
+            box-shadow: 0 20px 60px rgba(255, 138, 165, 0.2);
         }
 
         .input-glow:focus {
-            box-shadow: 0 0 20px rgba(255, 138, 165, 0.1);
-            border-color: rgba(255, 138, 165, 0.2);
+            background: rgba(38, 38, 38, 0.8);
         }
 
         @keyframes fadeIn {
@@ -103,18 +115,18 @@ $t = $languages[$current_lang];
         }
 
         .lang-dropdown {
-            background: rgba(26, 26, 26, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(38, 38, 38, 0.95);
+            backdrop-filter: blur(20px);
+            border: none;
         }
     </style>
 </head>
 
-<body class="overflow-x-hidden font-outfit">
+<body class="overflow-x-hidden font-sans bg-surface text-on-surface">
     <!-- Navbar -->
     <nav class="p-6">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <span class="text-2xl font-bold tracking-tight text-white uppercase tracking-widest"><a
+            <span class="text-2xl font-bold tracking-tight text-on-surface uppercase font-display tracking-widest"><a
                     href="https://omg10.com/4/10969248">Capture</a></span>
             <div class="flex items-center space-x-4 md:space-x-8">
                 <nav class="hidden lg:flex space-x-8">
@@ -129,7 +141,7 @@ $t = $languages[$current_lang];
                 <!-- Language Selector -->
                 <div class="relative group">
                     <button
-                        class="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/50 px-4 py-2 rounded-xl border border-slate-700/50 transition-all text-sm font-medium text-white">
+                        class="flex items-center gap-2 bg-surface-container hover:bg-surface-container-high px-4 py-2 rounded-xl transition-all text-sm font-medium text-on-surface">
                         <span class="uppercase"><?php echo $current_lang; ?></span>
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-4 w-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24"
@@ -138,18 +150,18 @@ $t = $languages[$current_lang];
                         </svg>
                     </button>
                     <div
-                        class="absolute right-0 mt-2 w-32 rounded-xl lang-dropdown opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 shadow-2xl overflow-hidden border border-white/5">
+                        class="absolute right-0 mt-2 w-32 rounded-xl lang-dropdown opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 ambient-shadow overflow-hidden ">
                         <a href="?lang=en"
-                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇺🇸
+                            class="block px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-colors ">🇺🇸
                             English</a>
                         <a href="?lang=es"
-                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇪🇸
+                            class="block px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-colors ">🇪🇸
                             Español</a>
                         <a href="?lang=pt"
-                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors border-b border-white/5">🇧🇷
+                            class="block px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-colors ">🇧🇷
                             Português</a>
                         <a href="?lang=fr"
-                            class="block px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-primary transition-colors">🇫🇷
+                            class="block px-4 py-3 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-colors">🇫🇷
                             Français</a>
                     </div>
                 </div>
@@ -161,30 +173,30 @@ $t = $languages[$current_lang];
     <main class="max-w-4xl mx-auto px-6 pt-24 pb-24">
         <!-- Header -->
         <div class="text-center mb-16 space-y-4">
-            <h1 class="text-6xl md:text-8xl font-extrabold text-white tracking-tighter leading-tight">
+            <h1 class="text-6xl md:text-8xl font-display font-extrabold text-on-surface tracking-tighter leading-tight">
                 <?php echo $t['header_title']; ?><span class="text-white">.</span>
             </h1>
-            <p class="text-lg text-slate-400 max-w-2xl mx-auto font-medium">
+            <p class="text-lg text-on-surface-variant max-w-2xl mx-auto font-medium">
                 <?php echo $t['header_desc']; ?>
             </p>
         </div>
 
         <!-- Download Card -->
-        <div class="glass-morphism rounded-3xl p-8 md:p-12 mb-8 relative">
+        <div class="glass-morphism rounded-3xl p-8 md:p-12 mb-8 relative ambient-shadow">
             <div class="space-y-6">
                 <div class="space-y-4">
                     <input type="text" id="urlInput" placeholder="<?php echo $t['input_placeholder']; ?>"
-                        class="w-full bg-slate-800/50 border border-slate-700/50 rounded-2xl py-5 px-6 text-white placeholder:text-slate-500 focus:outline-none input-glow transition-all">
+                        class="w-full bg-surface-container-highest rounded-3xl py-5 px-6 text-on-surface placeholder:text-on-surface-variant focus:outline-none input-glow transition-all backdrop-blur-md">
                     <div class="flex justify-end">
                         <button id="analyzeBtn"
-                            class="bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-surface font-extrabold py-4 px-12 text-xl rounded-xl transition-all glow-btn shadow-lg shadow-primary/20 uppercase tracking-tight">
+                            class="bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-surface font-extrabold py-4 px-12 text-xl rounded-full transition-all glow-btn uppercase tracking-tight">
                             <?php echo $t['analyze_btn']; ?>
                         </button>
                     </div>
                 </div>
 
                 <div id="ad-banner-1"
-                    class="w-full h-32 bg-slate-800/20 border border-dashed border-slate-700 rounded-xl flex items-center justify-center text-slate-600 text-sm italic">
+                    class="w-full h-32 bg-surface-container-low rounded-xl flex items-center justify-center text-on-surface-variant text-sm italic">
                     <script>
                         atOptions = {
                             'key': 'f88f153afa3d18c40ae849fc4ba1ece9',
@@ -208,21 +220,21 @@ $t = $languages[$current_lang];
         </div>
 
         <!-- Result Section -->
-        <div id="resultCard" class="hidden glass-morphism rounded-3xl p-8 overflow-hidden animate-fade-in">
+        <div id="resultCard" class="hidden glass-morphism rounded-3xl p-8 overflow-hidden animate-fade-in ambient-shadow">
             <div class="flex flex-col md:flex-row gap-8 items-center">
-                <div class="w-full md:w-1/3 aspect-square rounded-2xl bg-slate-800 overflow-hidden relative shadow-2xl">
+                <div class="w-full md:w-1/3 aspect-square rounded-2xl bg-surface-container-highest overflow-hidden relative ambient-shadow">
                     <img id="videoThumb" src="" alt="Thumbnail" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 </div>
                 <div class="w-full md:w-2/3 space-y-6">
                     <div>
-                        <h3 class="text-2xl font-bold text-white mb-2"><?php echo $t['ready_to_download']; ?></h3>
-                        <p class="text-slate-400"><?php echo $t['quality']; ?></p>
+                        <h3 class="text-2xl font-display font-bold text-on-surface mb-2"><?php echo $t['ready_to_download']; ?></h3>
+                        <p class="text-on-surface-variant"><?php echo $t['quality']; ?></p>
                     </div>
 
                     <a id="downloadLink" href="#" target="_blank" class="block w-full">
                         <button
-                            class="w-full bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-black font-bold py-5 rounded-2xl transition-all glow-btn shadow-lg shadow-primary/20 flex items-center justify-center gap-3">
+                            class="w-full bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-surface font-bold py-5 rounded-full transition-all glow-btn flex items-center justify-center gap-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -233,7 +245,7 @@ $t = $languages[$current_lang];
                     </a>
 
                     <div id="ad-banner-2"
-                        class="w-full h-24 bg-slate-800/20 border border-dashed border-slate-700 rounded-xl flex items-center justify-center text-slate-600 text-sm italic">
+                        class="w-full h-24 bg-surface-container-low rounded-xl flex items-center justify-center text-on-surface-variant text-sm italic">
                         <script>
                             atOptions = {
                                 'key': 'dd299b46bfe1dbaf276b2827e60c30d4',
@@ -252,39 +264,39 @@ $t = $languages[$current_lang];
 
         <!-- Features Grid -->
         <div class="grid md:grid-cols-3 gap-6 mt-20">
-            <div class="glass-morphism p-6 rounded-2xl space-y-4">
+            <div class="glass-morphism p-8 rounded-3xl space-y-4 ambient-shadow">
                 <div
                     class="w-12 h-12 bg-pink-500/10 text-primary rounded-lg flex items-center justify-center font-bold">
                     01</div>
-                <h4 class="text-lg font-bold text-white"><?php echo $t['feature_1_title']; ?></h4>
-                <p class="text-slate-400 text-sm leading-relaxed"><?php echo $t['feature_1_desc']; ?></p>
+                <h4 class="text-lg font-display font-bold text-on-surface"><?php echo $t['feature_1_title']; ?></h4>
+                <p class="text-on-surface-variant text-sm leading-relaxed"><?php echo $t['feature_1_desc']; ?></p>
             </div>
-            <div class="glass-morphism p-6 rounded-2xl space-y-4">
+            <div class="glass-morphism p-8 rounded-3xl space-y-4 ambient-shadow">
                 <div
                     class="w-12 h-12 bg-orange-500/10 text-secondary rounded-lg flex items-center justify-center font-bold">
                     02</div>
-                <h4 class="text-lg font-bold text-white"><?php echo $t['feature_2_title']; ?></h4>
-                <p class="text-slate-400 text-sm leading-relaxed"><?php echo $t['feature_2_desc']; ?></p>
+                <h4 class="text-lg font-display font-bold text-on-surface"><?php echo $t['feature_2_title']; ?></h4>
+                <p class="text-on-surface-variant text-sm leading-relaxed"><?php echo $t['feature_2_desc']; ?></p>
             </div>
-            <div class="glass-morphism p-6 rounded-2xl space-y-4">
+            <div class="glass-morphism p-8 rounded-3xl space-y-4 ambient-shadow">
                 <div
                     class="w-12 h-12 bg-pink-500/10 text-primary rounded-lg flex items-center justify-center font-bold">
                     03</div>
-                <h4 class="text-lg font-bold text-white"><?php echo $t['feature_3_title']; ?></h4>
-                <p class="text-slate-400 text-sm leading-relaxed"><?php echo $t['feature_3_desc']; ?></p>
+                <h4 class="text-lg font-display font-bold text-on-surface"><?php echo $t['feature_3_title']; ?></h4>
+                <p class="text-on-surface-variant text-sm leading-relaxed"><?php echo $t['feature_3_desc']; ?></p>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800 py-12 px-6">
+    <footer class="py-12 px-6 mt-16 bg-surface-container-lowest">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <p class="text-slate-500 text-sm"><?php echo $t['footer_copyright']; ?></p>
-            <div class="flex gap-6 text-sm text-slate-400">
-                <a href="terms.php" class="hover:text-white"><?php echo $t['footer_terms']; ?></a>
-                <a href="privacy.php" class="hover:text-white"><?php echo $t['footer_privacy']; ?></a>
+            <p class="text-on-surface-variant text-sm"><?php echo $t['footer_copyright']; ?></p>
+            <div class="flex gap-6 text-sm text-on-surface-variant">
+                <a href="terms.php" class="hover:text-on-surface"><?php echo $t['footer_terms']; ?></a>
+                <a href="privacy.php" class="hover:text-on-surface"><?php echo $t['footer_privacy']; ?></a>
                 <a href="mailto:emprendedordigital1970@gmail.com"
-                    class="hover:text-white"><?php echo $t['footer_contact']; ?></a>
+                    class="hover:text-on-surface"><?php echo $t['footer_contact']; ?></a>
             </div>
         </div>
     </footer>

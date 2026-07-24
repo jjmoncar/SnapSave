@@ -13,6 +13,11 @@ if (!$url) {
     exit;
 }
 
+if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+    echo json_encode(['error' => 'Invalid URL provided.']);
+    exit;
+}
+
 $platform = '';
 $endpoint = '';
 
