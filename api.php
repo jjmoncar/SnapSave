@@ -50,8 +50,11 @@ if (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== fa
     $platform = 'facebook';
     $cleanUrl = strtok($url, '?');
     $endpoint = "/facebook/v3/post/details?url=" . urlencode($cleanUrl);
+} elseif (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
+    $platform = 'youtube';
+    $endpoint = "/youtube/v3/post/details?url=" . urlencode($url);
 } else {
-    echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide an Instagram, TikTok, or Facebook URL.']);
+    echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide an Instagram, TikTok, Facebook, or YouTube URL.']);
     exit;
 }
 
@@ -133,6 +136,15 @@ elseif (!empty($data['medias'][0]['url'])) {
 } elseif (!empty($data['data']['video_url'])) {
     $rawVideo = $data['data']['video_url'];
     $rawThumb = $data['data']['cover'] ?? null;
+} elseif (!empty($data['videos'][0]['url'])) {
+    $rawVideo = $data['videos'][0]['url'];
+    $rawThumb = $data['thumbnail'] ?? ($data['thumb'] ?? null);
+} elseif (!empty($data['formats'][0]['url'])) {
+    $rawVideo = $data['formats'][0]['url'];
+    $rawThumb = $data['thumbnail'] ?? null;
+} elseif (!empty($data['download_url'])) {
+    $rawVideo = $data['download_url'];
+    $rawThumb = $data['thumbnail'] ?? null;
 }
 
 if ($rawVideo) {
