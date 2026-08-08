@@ -52,7 +52,18 @@ if (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== fa
     $endpoint = "/facebook/v3/post/details?url=" . urlencode($cleanUrl);
 } elseif (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
     $platform = 'youtube';
-    $endpoint = "/youtube/v3/post/details?url=" . urlencode($url);
+    $videoId = '';
+    
+    if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i', $url, $matches)) {
+        $videoId = $matches[1];
+    }
+    
+    if (!$videoId) {
+        echo json_encode(['status' => false, 'error' => 'Could not extract valid YouTube video ID from the provided link.']);
+        exit;
+    }
+    
+    $endpoint = "/youtube/v3/video/details?videoId=" . urlencode($videoId);
 } else {
     echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide an Instagram, TikTok, Facebook, or YouTube URL.']);
     exit;
