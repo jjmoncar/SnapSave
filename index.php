@@ -145,14 +145,10 @@ $t = $languages[$current_lang];
             </span>
             <div class="flex items-center space-x-4 md:space-x-8">
                 <!-- Nav Tabs -->
-                <nav class="hidden lg:flex space-x-3">
+                <nav class="hidden lg:flex space-x-4">
                     <button type="button" data-platform="all"
                         class="nav-tab px-3 py-1.5 rounded-full text-sm font-medium transition-all text-primary font-bold bg-surface-container-high border border-primary/20">
                         <?php echo $t['nav_all']; ?>
-                    </button>
-                    <button type="button" data-platform="youtube"
-                        class="nav-tab px-3 py-1.5 rounded-full text-sm font-medium transition-all text-on-surface-variant hover:text-primary">
-                        <?php echo $t['nav_youtube']; ?>
                     </button>
                     <button type="button" data-platform="instagram"
                         class="nav-tab px-3 py-1.5 rounded-full text-sm font-medium transition-all text-on-surface-variant hover:text-primary">
@@ -459,9 +455,7 @@ $t = $languages[$current_lang];
                        .addClass('text-primary font-bold bg-surface-container-high border border-primary/20');
                 
                 const platform = $(this).data('platform') || $(this).attr('data-platform');
-                if (platform === 'youtube') {
-                    $urlInput.attr('placeholder', translations.input_placeholder_yt || translations.input_placeholder);
-                } else if (platform === 'instagram') {
+                if (platform === 'instagram') {
                     $urlInput.attr('placeholder', translations.input_placeholder_ig || translations.input_placeholder);
                 } else if (platform === 'tiktok') {
                     $urlInput.attr('placeholder', translations.input_placeholder_tt || translations.input_placeholder);
