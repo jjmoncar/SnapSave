@@ -43,8 +43,9 @@ if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false)
     $apiUrl = "https://$YT_HOST/dl?id=" . urlencode($videoId);
 } elseif (strpos($url, 'twitter.com') !== false || strpos($url, 'x.com') !== false) {
     $platform = 'twitter';
+    $cleanUrl = strtok($url, '?');
     $apiHost = $TWITTER_HOST;
-    $apiUrl = "https://$TWITTER_HOST/download?url=" . urlencode($url);
+    $apiUrl = "https://$TWITTER_HOST/download?link=" . urlencode($cleanUrl) . "&url=" . urlencode($cleanUrl);
 } elseif (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== false) {
     $platform = 'instagram';
     $shortcode = '';
