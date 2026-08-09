@@ -302,6 +302,33 @@ $t = $languages[$current_lang];
                                 <span><?php echo $t['btn_another']; ?></span>
                             </button>
                         </div>
+
+                        <!-- PayPal Donation Box -->
+                        <div class="mt-4 pt-4 border-t border-surface-container-high">
+                            <a href="https://www.paypal.com/donate/?hosted_button_id=55WTBANAQKV2J" 
+                               target="_blank" rel="noopener noreferrer" 
+                               class="group block w-full bg-gradient-to-r from-blue-900/40 to-indigo-900/40 hover:from-blue-800/50 hover:to-indigo-800/50 border border-blue-500/30 hover:border-blue-400/50 rounded-2xl p-4 transition-all duration-300 shadow-lg">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .761-.643h6.666c2.404 0 4.296.643 5.4 1.841 1.055 1.144 1.258 2.766.602 4.823-.74 2.327-2.316 4.095-4.484 5.02-1.077.46-2.326.685-3.71.685H8.163a.77.77 0 0 0-.76.645l-1.026 5.865a.64.64 0 0 1-.63.541h1.333z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold uppercase tracking-wider text-blue-300"><?php echo $t['donate_title']; ?></p>
+                                            <p class="text-xs text-on-surface-variant line-clamp-1"><?php echo $t['donate_desc']; ?></p>
+                                        </div>
+                                    </div>
+                                    <span class="bg-blue-600 group-hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-colors shrink-0 flex items-center gap-1.5 shadow-md">
+                                        <span><?php echo $t['btn_donate']; ?></span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
