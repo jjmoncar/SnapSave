@@ -1,9 +1,10 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// Configuración de RapidAPI
+// Configuración de RapidAPI Keys y Hosts
 $RAPIDAPI_KEY = "d374ccf789mshf6309148d5d9351p1935e0jsnd3b3dc8d455e";
-$RAPIDAPI_HOST = "social-media-video-downloader.p.rapidapi.com";
+$SMVD_HOST = "social-media-video-downloader.p.rapidapi.com";
+$YT_HOST = "yt-api.p.rapidapi.com";
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true);
@@ -20,14 +21,29 @@ if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $ur
 }
 
 $platform = '';
-$endpoint = '';
+$apiUrl = '';
+$apiHost = '';
 
-// Detección y extracción mejorada por Plataforma
-if (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== false) {
+// Detección por Plataforma
+if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
+    $platform = 'youtube';
+    $videoId = '';
+    
+    if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i', $url, $matches)) {
+        $videoId = $matches[1];
+    }
+    
+    if (!$videoId) {
+        echo json_encode(['status' => false, 'error' => 'Could not extract valid YouTube video ID from the provided link.']);
+        exit;
+    }
+    
+    $apiHost = $YT_HOST;
+    $apiUrl = "https://$YT_HOST/dl?id=" . urlencode($videoId);
+} elseif (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== false) {
     $platform = 'instagram';
     $shortcode = '';
     
-    // Extracción de shortcode mediante Expresión Regular robusta
     if (preg_match('/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i', $url, $matches)) {
         $shortcode = $matches[1];
     } else {
@@ -41,30 +57,33 @@ if (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== fa
         exit;
     }
     
-    $endpoint = "/instagram/v3/media/post/details?shortcode=" . urlencode($shortcode) . "&renderableFormats=720p,highres";
+    $apiHost = $SMVD_HOST;
+    $apiUrl = "https://$SMVD_HOST/instagram/v3/media/post/details?shortcode=" . urlencode($shortcode) . "&renderableFormats=720p,highres";
 } elseif (strpos($url, 'tiktok.com') !== false) {
     $platform = 'tiktok';
     $cleanUrl = strtok($url, '?');
-    $endpoint = "/tiktok/v3/post/details?url=" . urlencode($cleanUrl);
+    $apiHost = $SMVD_HOST;
+    $apiUrl = "https://$SMVD_HOST/tiktok/v3/post/details?url=" . urlencode($cleanUrl);
 } elseif (strpos($url, 'facebook.com') !== false || strpos($url, 'fb.watch') !== false || strpos($url, 'fb.gg') !== false) {
     $platform = 'facebook';
     $cleanUrl = strtok($url, '?');
-    $endpoint = "/facebook/v3/post/details?url=" . urlencode($cleanUrl);
+    $apiHost = $SMVD_HOST;
+    $apiUrl = "https://$SMVD_HOST/facebook/v3/post/details?url=" . urlencode($cleanUrl);
 } else {
-    echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide an Instagram, TikTok, or Facebook URL.']);
+    echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide an Instagram, TikTok, Facebook, or YouTube URL.']);
     exit;
 }
 
 $curl = curl_init();
 curl_setopt_array($curl, [
-    CURLOPT_URL => "https://$RAPIDAPI_HOST$endpoint",
+    CURLOPT_URL => $apiUrl,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_CONNECTTIMEOUT => 10,
     CURLOPT_TIMEOUT => 25,
     CURLOPT_SSL_VERIFYPEER => true,
     CURLOPT_HTTPHEADER => [
-        "X-RapidAPI-Host: $RAPIDAPI_HOST",
+        "X-RapidAPI-Host: $apiHost",
         "X-RapidAPI-Key: $RAPIDAPI_KEY",
         "Accept: application/json"
     ],
@@ -88,64 +107,74 @@ if (!$data) {
 }
 
 // Si la API devuelve error explícito
-if (isset($data['message']) && !isset($data['contents']) && !isset($data['result']) && !isset($data['url'])) {
+if (isset($data['message']) && !isset($data['contents']) && !isset($data['result']) && !isset($data['url']) && !isset($data['formats'])) {
     echo json_encode(['status' => false, 'error' => 'API Error: ' . $data['message']]);
     exit;
 }
 
-// Mapeo unificado multiesquema para la extracción de video y miniatura
 $rawVideo = null;
 $rawThumb = null;
 
-// Esquema 1: v3 contents -> videos
-if (!empty($data['contents'][0]['videos'][0]['url'])) {
-    $rawVideo = $data['contents'][0]['videos'][0]['url'];
-    $rawThumb = $data['metadata']['thumbnailUrl'] ?? ($data['contents'][0]['thumbnailUrl'] ?? null);
-}
-// Esquema 2: v3 contents -> direct url
-elseif (!empty($data['contents'][0]['url'])) {
-    $rawVideo = $data['contents'][0]['url'];
-    $rawThumb = $data['contents'][0]['thumbnailUrl'] ?? ($data['metadata']['thumbnailUrl'] ?? null);
-}
-// Esquema 3: result array / string
-elseif (!empty($data['result'])) {
-    if (is_array($data['result'])) {
-        $firstResult = $data['result'][0] ?? null;
-        if (is_array($firstResult)) {
-            $rawVideo = $firstResult['url'] ?? ($firstResult['video'] ?? null);
-            $rawThumb = $firstResult['thumb'] ?? ($firstResult['thumbnail'] ?? null);
-        } elseif (is_string($firstResult)) {
-            $rawVideo = $firstResult;
+if ($platform === 'youtube') {
+    // Procesamiento especializado para yt-api (ytjar)
+    if (!empty($data['formats'])) {
+        foreach ($data['formats'] as $fmt) {
+            if (isset($fmt['url']) && strpos($fmt['mimeType'] ?? '', 'video/mp4') !== false) {
+                $rawVideo = $fmt['url'];
+                break;
+            }
         }
-    } elseif (is_string($data['result'])) {
-        $rawVideo = $data['result'];
+        if (!$rawVideo && isset($data['formats'][0]['url'])) {
+            $rawVideo = $data['formats'][0]['url'];
+        }
+    } elseif (!empty($data['adaptiveFormats'])) {
+        foreach ($data['adaptiveFormats'] as $fmt) {
+            if (isset($fmt['url']) && strpos($fmt['mimeType'] ?? '', 'video/mp4') !== false) {
+                $rawVideo = $fmt['url'];
+                break;
+            }
+        }
     }
-}
-// Esquema 4: medias / links directos
-elseif (!empty($data['medias'][0]['url'])) {
-    $rawVideo = $data['medias'][0]['url'];
-    $rawThumb = $data['medias'][0]['thumbnail'] ?? null;
-} elseif (!empty($data['links'][0]['url'])) {
-    $rawVideo = $data['links'][0]['url'];
-} elseif (!empty($data['url'])) {
-    $rawVideo = $data['url'];
-    $rawThumb = $data['thumbnailUrl'] ?? ($data['thumb'] ?? null);
-} elseif (!empty($data['data']['video_url'])) {
-    $rawVideo = $data['data']['video_url'];
-    $rawThumb = $data['data']['cover'] ?? null;
-} elseif (!empty($data['videos'][0]['url'])) {
-    $rawVideo = $data['videos'][0]['url'];
-    $rawThumb = $data['thumbnail'] ?? ($data['thumb'] ?? null);
-} elseif (!empty($data['formats'][0]['url'])) {
-    $rawVideo = $data['formats'][0]['url'];
-    $rawThumb = $data['thumbnail'] ?? null;
-} elseif (!empty($data['download_url'])) {
-    $rawVideo = $data['download_url'];
-    $rawThumb = $data['thumbnail'] ?? null;
+    
+    if (isset($data['thumbnail']) && is_array($data['thumbnail'])) {
+        $lastThumb = end($data['thumbnail']);
+        $rawThumb = $lastThumb['url'] ?? null;
+    }
+} else {
+    // Parseo multiesquema para Instagram, TikTok, Facebook
+    if (!empty($data['contents'][0]['videos'][0]['url'])) {
+        $rawVideo = $data['contents'][0]['videos'][0]['url'];
+        $rawThumb = $data['metadata']['thumbnailUrl'] ?? ($data['contents'][0]['thumbnailUrl'] ?? null);
+    } elseif (!empty($data['contents'][0]['url'])) {
+        $rawVideo = $data['contents'][0]['url'];
+        $rawThumb = $data['contents'][0]['thumbnailUrl'] ?? ($data['metadata']['thumbnailUrl'] ?? null);
+    } elseif (!empty($data['result'])) {
+        if (is_array($data['result'])) {
+            $firstResult = $data['result'][0] ?? null;
+            if (is_array($firstResult)) {
+                $rawVideo = $firstResult['url'] ?? ($firstResult['video'] ?? null);
+                $rawThumb = $firstResult['thumb'] ?? ($firstResult['thumbnail'] ?? null);
+            } elseif (is_string($firstResult)) {
+                $rawVideo = $firstResult;
+            }
+        } elseif (is_string($data['result'])) {
+            $rawVideo = $data['result'];
+        }
+    } elseif (!empty($data['medias'][0]['url'])) {
+        $rawVideo = $data['medias'][0]['url'];
+        $rawThumb = $data['medias'][0]['thumbnail'] ?? null;
+    } elseif (!empty($data['links'][0]['url'])) {
+        $rawVideo = $data['links'][0]['url'];
+    } elseif (!empty($data['url'])) {
+        $rawVideo = $data['url'];
+        $rawThumb = $data['thumbnailUrl'] ?? ($data['thumb'] ?? null);
+    } elseif (!empty($data['data']['video_url'])) {
+        $rawVideo = $data['data']['video_url'];
+        $rawThumb = $data['data']['cover'] ?? null;
+    }
 }
 
 if ($rawVideo) {
-    // Generar un nombre aleatorio seguro para la descarga
     $randomName = "SnapSave_" . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 10);
     $videoProxy = "download.php?url=" . urlencode($rawVideo) . "&filename=" . $randomName . ".mp4";
     $thumbProxy = $rawThumb ? "download.php?url=" . urlencode($rawThumb) . "&isImage=true" : null;
@@ -168,4 +197,5 @@ if ($rawVideo) {
         'debug' => 'Response received but no compatible video URL detected.'
     ]);
 }
+
 
