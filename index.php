@@ -19,8 +19,6 @@ $t = $languages[$current_lang];
 
 <head>
 
-    <script>(function (s) { s.dataset.zone = '10969272', s.src = 'https://al5sm.com/tag.min.js' })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $t['title']; ?></title>
@@ -244,20 +242,6 @@ $t = $languages[$current_lang];
                         </button>
                     </div>
                 </div>
-
-                <div id="ad-banner-1"
-                    class="w-full min-h-[90px] bg-surface-container-low rounded-xl flex items-center justify-center text-on-surface-variant text-sm italic overflow-hidden">
-                    <script>
-                        atOptions = {
-                            'key': 'f88f153afa3d18c40ae849fc4ba1ece9',
-                            'format': 'iframe',
-                            'height': 90,
-                            'width': 728,
-                            'params': {}
-                        };
-                    </script>
-                    <script src="https://www.highperformanceformat.com/f88f153afa3d18c40ae849fc4ba1ece9/invoke.js"></script>
-                </div>
             </div>
 
             <!-- Loading State -->
@@ -314,20 +298,6 @@ $t = $languages[$current_lang];
                                 <span><?php echo $t['btn_another']; ?></span>
                             </button>
                         </div>
-                    </div>
-
-                    <div id="ad-banner-2"
-                        class="w-full min-h-[60px] bg-surface-container-low rounded-xl flex items-center justify-center text-on-surface-variant text-sm italic overflow-hidden">
-                        <script>
-                            atOptions = {
-                                'key': 'dd299b46bfe1dbaf276b2827e60c30d4',
-                                'format': 'iframe',
-                                'height': 60,
-                                'width': 468,
-                                'params': {}
-                            };
-                        </script>
-                        <script src="https://www.highperformanceformat.com/dd299b46bfe1dbaf276b2827e60c30d4/invoke.js"></script>
                     </div>
                 </div>
             </div>
