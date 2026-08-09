@@ -148,6 +148,10 @@ $t = $languages[$current_lang];
                         class="nav-tab px-3 py-1.5 rounded-full text-sm font-medium transition-all text-primary font-bold bg-surface-container-high border border-primary/20">
                         <?php echo $t['nav_all']; ?>
                     </button>
+                    <button type="button" data-platform="twitter"
+                        class="nav-tab px-3 py-1.5 rounded-full text-sm font-medium transition-all text-on-surface-variant hover:text-primary">
+                        <?php echo $t['nav_twitter']; ?>
+                    </button>
                     <button type="button" data-platform="youtube"
                         class="nav-tab px-3 py-1.5 rounded-full text-sm font-medium transition-all text-on-surface-variant hover:text-primary">
                         <?php echo $t['nav_youtube']; ?>
@@ -435,6 +439,8 @@ $t = $languages[$current_lang];
                     $urlInput.attr('placeholder', translations.input_placeholder_ig || translations.input_placeholder);
                 } else if (platform === 'tiktok') {
                     $urlInput.attr('placeholder', translations.input_placeholder_tt || translations.input_placeholder);
+                } else if (platform === 'twitter') {
+                    $urlInput.attr('placeholder', translations.input_placeholder_tw || translations.input_placeholder);
                 } else if (platform === 'facebook') {
                     $urlInput.attr('placeholder', translations.input_placeholder_fb || translations.input_placeholder);
                 } else {

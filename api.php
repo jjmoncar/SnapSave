@@ -5,6 +5,7 @@ header('Content-Type: application/json; charset=utf-8');
 $RAPIDAPI_KEY = "d374ccf789mshf6309148d5d9351p1935e0jsnd3b3dc8d455e";
 $SMVD_HOST = "social-media-video-downloader.p.rapidapi.com";
 $YT_HOST = "yt-api.p.rapidapi.com";
+$TWITTER_HOST = "twitter-x-video-downloader-api.p.rapidapi.com";
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true);
@@ -40,6 +41,10 @@ if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false)
     
     $apiHost = $YT_HOST;
     $apiUrl = "https://$YT_HOST/dl?id=" . urlencode($videoId);
+} elseif (strpos($url, 'twitter.com') !== false || strpos($url, 'x.com') !== false) {
+    $platform = 'twitter';
+    $apiHost = $TWITTER_HOST;
+    $apiUrl = "https://$TWITTER_HOST/download?url=" . urlencode($url);
 } elseif (strpos($url, 'instagram.com') !== false || strpos($url, 'instagr.am') !== false) {
     $platform = 'instagram';
     $shortcode = '';
@@ -70,7 +75,7 @@ if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false)
     $apiHost = $SMVD_HOST;
     $apiUrl = "https://$SMVD_HOST/facebook/v3/post/details?url=" . urlencode($cleanUrl);
 } else {
-    echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide an Instagram, TikTok, Facebook, or YouTube URL.']);
+    echo json_encode(['status' => false, 'error' => 'Unsupported platform. Please provide a Twitter (X), Instagram, TikTok, Facebook, or YouTube URL.']);
     exit;
 }
 
@@ -139,6 +144,31 @@ if ($platform === 'youtube') {
     if (isset($data['thumbnail']) && is_array($data['thumbnail'])) {
         $lastThumb = end($data['thumbnail']);
         $rawThumb = $lastThumb['url'] ?? null;
+    }
+} elseif ($platform === 'twitter') {
+    // Parseo para Twitter / X (twitter-x-video-downloader-api / EaseApi)
+    if (!empty($data['medias'])) {
+        foreach ($data['medias'] as $mediaItem) {
+            if (!empty($mediaItem['url'])) {
+                $rawVideo = $mediaItem['url'];
+                $rawThumb = $mediaItem['thumbnail'] ?? ($data['thumbnail'] ?? null);
+                break;
+            }
+        }
+    } elseif (!empty($data['videos'])) {
+        foreach ($data['videos'] as $v) {
+            if (!empty($v['url'])) {
+                $rawVideo = $v['url'];
+                $rawThumb = $v['thumbnail'] ?? ($data['thumbnail'] ?? null);
+                break;
+            }
+        }
+    } elseif (!empty($data['url'])) {
+        $rawVideo = $data['url'];
+        $rawThumb = $data['thumbnail'] ?? ($data['thumb'] ?? null);
+    } elseif (!empty($data['data']['video_url'])) {
+        $rawVideo = $data['data']['video_url'];
+        $rawThumb = $data['data']['cover'] ?? ($data['data']['thumbnail'] ?? null);
     }
 } else {
     // Parseo multiesquema para Instagram, TikTok, Facebook
