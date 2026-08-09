@@ -113,7 +113,19 @@ if (!$data) {
 }
 
 // Si la API devuelve error explícito
-if (isset($data['message']) && !isset($data['contents']) && !isset($data['result']) && !isset($data['url']) && !isset($data['formats'])) {
+if (isset($data['success']) && $data['success'] === false) {
+    $errMsg = $data['message'] ?? ($data['error'] ?? 'API request failed');
+    echo json_encode(['status' => false, 'error' => 'API Error: ' . $errMsg]);
+    exit;
+}
+
+if (isset($data['status']) && $data['status'] === false) {
+    $errMsg = $data['message'] ?? ($data['error'] ?? 'API status false');
+    echo json_encode(['status' => false, 'error' => 'API Error: ' . $errMsg]);
+    exit;
+}
+
+if (isset($data['message']) && strtolower($data['message']) !== 'success' && strtolower($data['message']) !== 'ok' && !isset($data['data']) && !isset($data['medias']) && !isset($data['videos']) && !isset($data['contents']) && !isset($data['result']) && !isset($data['url']) && !isset($data['formats'])) {
     echo json_encode(['status' => false, 'error' => 'API Error: ' . $data['message']]);
     exit;
 }
@@ -148,28 +160,33 @@ if ($platform === 'youtube') {
     }
 } elseif ($platform === 'twitter') {
     // Parseo para Twitter / X (twitter-x-video-downloader-api / EaseApi)
-    if (!empty($data['medias'])) {
-        foreach ($data['medias'] as $mediaItem) {
-            if (!empty($mediaItem['url'])) {
-                $rawVideo = $mediaItem['url'];
-                $rawThumb = $mediaItem['thumbnail'] ?? ($data['thumbnail'] ?? null);
-                break;
-            }
-        }
-    } elseif (!empty($data['videos'])) {
-        foreach ($data['videos'] as $v) {
+    $tData = $data['data'] ?? $data;
+    
+    if (!empty($tData['videos'])) {
+        foreach ($tData['videos'] as $v) {
             if (!empty($v['url'])) {
                 $rawVideo = $v['url'];
-                $rawThumb = $v['thumbnail'] ?? ($data['thumbnail'] ?? null);
                 break;
             }
         }
-    } elseif (!empty($data['url'])) {
-        $rawVideo = $data['url'];
-        $rawThumb = $data['thumbnail'] ?? ($data['thumb'] ?? null);
-    } elseif (!empty($data['data']['video_url'])) {
-        $rawVideo = $data['data']['video_url'];
-        $rawThumb = $data['data']['cover'] ?? ($data['data']['thumbnail'] ?? null);
+    }
+    
+    if (!$rawVideo && !empty($tData['medias'])) {
+        foreach ($tData['medias'] as $m) {
+            if (!empty($m['url'])) {
+                $rawVideo = $m['url'];
+                break;
+            }
+        }
+    }
+    
+    if (!$rawVideo) {
+        $rawVideo = $tData['video_url'] ?? ($tData['video'] ?? ($tData['url'] ?? null));
+    }
+    
+    $rawThumb = $tData['thumbnail'] ?? ($tData['cover'] ?? ($tData['thumb'] ?? ($data['thumbnail'] ?? null)));
+    if (is_array($rawThumb)) {
+        $rawThumb = $rawThumb['url'] ?? (end($rawThumb)['url'] ?? null);
     }
 } else {
     // Parseo multiesquema para Instagram, TikTok, Facebook
