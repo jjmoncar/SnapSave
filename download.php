@@ -6,9 +6,20 @@ while (ob_get_level()) {
 
 @set_time_limit(0);
 
+// Headers CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS');
+header('Access-Control-Expose-Headers: Content-Length, Content-Range, Accept-Ranges');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 $url = $_GET['url'] ?? '';
 $rawFilename = $_GET['filename'] ?? '';
 $isImage = isset($_GET['isImage']) && $_GET['isImage'] !== 'false';
+$isInline = !empty($_GET['inline']) || $isImage;
 
 if (!$url) {
     http_response_code(400);
@@ -25,6 +36,7 @@ if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $ur
 // Validación SSRF: Verificar Host e IP
 $parsedUrl = parse_url($url);
 $host = strtolower($parsedUrl['host'] ?? '');
+$port = isset($parsedUrl['port']) ? (int)$parsedUrl['port'] : null;
 
 if (!$host) {
     http_response_code(400);
@@ -32,34 +44,52 @@ if (!$host) {
     die("Error 400: Invalid host in URL.");
 }
 
-// Bloqueo explícito de hosts internos / loopback
-$blockedHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
-if (in_array($host, $blockedHosts, true) || str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
+// Restricción de puertos para prevenir port scanning interno
+if ($port !== null && !in_array($port, [80, 443, 8080, 8443], true)) {
     http_response_code(403);
     header('Content-Type: text/plain; charset=utf-8');
-    die("Error 403: Access to local network resources is forbidden.");
+    die("Error 403: Forbidden port specified.");
 }
 
-// Resolver IPs del host y verificar rangos privados/reservados
-$resolvedIps = @gethostbynamel($host);
-if ($resolvedIps === false || empty($resolvedIps)) {
-    // Si gethostbynamel falla, intentar gethostbyname simple
-    $singleIp = @gethostbyname($host);
-    if ($singleIp && $singleIp !== $host) {
-        $resolvedIps = [$singleIp];
+// Función auxiliar para validar si un host o IP es seguro (no interno/privado)
+function isHostSafe(string $checkHost): bool {
+    $blocked = [
+        'localhost', '127.0.0.1', '::1', '0.0.0.0',
+        '169.254.169.254', 'metadata.google.internal',
+        'instance-data'
+    ];
+    if (in_array($checkHost, $blocked, true)) {
+        return false;
     }
-}
-
-if (!empty($resolvedIps)) {
-    foreach ($resolvedIps as $checkIp) {
-        if (filter_var($checkIp, FILTER_VALIDATE_IP)) {
-            if (!filter_var($checkIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                http_response_code(403);
-                header('Content-Type: text/plain; charset=utf-8');
-                die("Error 403: Access to private or reserved IP space is forbidden.");
+    if (str_ends_with($checkHost, '.local') || str_ends_with($checkHost, '.internal') || str_ends_with($checkHost, '.localhost')) {
+        return false;
+    }
+    
+    // Resolver IPs del host y verificar rangos privados y reservados
+    $resolvedIps = @gethostbynamel($checkHost);
+    if ($resolvedIps === false || empty($resolvedIps)) {
+        $singleIp = @gethostbyname($checkHost);
+        if ($singleIp && $singleIp !== $checkHost) {
+            $resolvedIps = [$singleIp];
+        }
+    }
+    
+    if (!empty($resolvedIps)) {
+        foreach ($resolvedIps as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return false;
+                }
             }
         }
     }
+    return true;
+}
+
+if (!isHostSafe($host)) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    die("Error 403: Access to private or reserved network resources is forbidden.");
 }
 
 // Sanitizar nombre de archivo contra Header Injection y Path Traversal
@@ -72,7 +102,7 @@ if (strlen($cleanFilename) > 80) {
 
 if (!$cleanFilename) {
     $randomStr = bin2hex(random_bytes(6));
-    $cleanFilename = "SnapSave_" . $randomStr . $defaultExt;
+    $cleanFilename = "OmniClip_" . $randomStr . $defaultExt;
 } else {
     if (!preg_match('/\.(mp4|mov|avi|mkv|webm|jpg|jpeg|png|webp|gif)$/i', $cleanFilename)) {
         $cleanFilename .= $defaultExt;
@@ -86,13 +116,14 @@ $requestHeaders = [
     'Accept-Language: en-US,en;q=0.9,es;q=0.8'
 ];
 
-// Reenviar Range header si el cliente lo envía (soporte de seek y pause/resume)
+// Reenviar Range header si el cliente lo envía (soporte de seek y pause/resume en reproductor HTML5)
 if (!empty($_SERVER['HTTP_RANGE'])) {
     $requestHeaders[] = 'Range: ' . $_SERVER['HTTP_RANGE'];
 }
 
 $headersSent = false;
 $upstreamStatus = 200;
+$isHeadRequest = (($_SERVER['REQUEST_METHOD'] ?? '') === 'HEAD');
 
 $ch = curl_init();
 curl_setopt_array($ch, [
@@ -104,8 +135,11 @@ curl_setopt_array($ch, [
     CURLOPT_TIMEOUT => 300,
     CURLOPT_SSL_VERIFYPEER => true,
     CURLOPT_SSL_VERIFYHOST => 2,
+    CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+    CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+    CURLOPT_NOBODY => $isHeadRequest,
     CURLOPT_HTTPHEADER => $requestHeaders,
-    CURLOPT_HEADERFUNCTION => function ($curl, $headerLine) use (&$headersSent, &$upstreamStatus, $isImage, $cleanFilename) {
+    CURLOPT_HEADERFUNCTION => function ($curl, $headerLine) use (&$headersSent, &$upstreamStatus, $isImage, $isInline, $cleanFilename) {
         $len = strlen($headerLine);
         $trimmed = trim($headerLine);
 
@@ -114,6 +148,15 @@ curl_setopt_array($ch, [
             // No enviar cabeceras definitivas si es una redirección intermedia
             if ($upstreamStatus >= 300 && $upstreamStatus < 400) {
                 return $len;
+            }
+        }
+
+        // Validar destino de redirección para evitar SSRF en saltos
+        if (stripos($trimmed, 'Location:') === 0) {
+            $redirUrl = trim(substr($trimmed, 9));
+            $parsedRedir = parse_url($redirUrl);
+            if (!empty($parsedRedir['host']) && !isHostSafe(strtolower($parsedRedir['host']))) {
+                return 0; // Aborta cURL si redirige a red interna
             }
         }
 
@@ -131,14 +174,17 @@ curl_setopt_array($ch, [
         if (!$headersSent) {
             http_response_code($upstreamStatus === 206 ? 206 : 200);
             
-            if (!$isImage) {
+            if ($isInline) {
+                // Modo inline para previsualización directa en el reproductor HTML5
+                header('Content-Disposition: inline; filename="' . $cleanFilename . '"');
+                header('Cache-Control: public, max-age=3600');
+            } else {
+                // Modo descarga de archivo
                 header('Content-Disposition: attachment; filename="' . $cleanFilename . '"');
                 header('Content-Transfer-Encoding: binary');
                 header('Cache-Control: no-cache, no-store, must-revalidate');
                 header('Pragma: no-cache');
                 header('Expires: 0');
-            } else {
-                header('Cache-Control: public, max-age=86400');
             }
             $headersSent = true;
         }
@@ -156,7 +202,7 @@ curl_setopt_array($ch, [
 
         return $len;
     },
-    CURLOPT_WRITEFUNCTION => function ($curl, $data) use (&$headersSent, &$upstreamStatus, $isImage, $cleanFilename) {
+    CURLOPT_WRITEFUNCTION => function ($curl, $data) use (&$headersSent, &$upstreamStatus, $isImage, $isInline, $cleanFilename) {
         if ($upstreamStatus >= 400) {
             echo "Error upstream ($upstreamStatus): Unable to retrieve media stream.";
             return strlen($data);
@@ -165,9 +211,7 @@ curl_setopt_array($ch, [
         if (!$headersSent) {
             http_response_code(200);
             header("Content-Type: " . ($isImage ? "image/jpeg" : "video/mp4"));
-            if (!$isImage) {
-                header('Content-Disposition: attachment; filename="' . $cleanFilename . '"');
-            }
+            header('Content-Disposition: ' . ($isInline ? 'inline' : 'attachment') . '; filename="' . $cleanFilename . '"');
             $headersSent = true;
         }
 
@@ -185,8 +229,6 @@ $curlErr = curl_error($ch);
 curl_close($ch);
 
 if ($curlErr) {
-    error_log("SnapSave Download cURL Error: " . $curlErr);
+    error_log("OmniClip Download cURL Error: " . $curlErr);
 }
 exit;
-
-

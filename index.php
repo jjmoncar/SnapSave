@@ -1,5 +1,10 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_samesite', 'Lax');
+    session_start();
+}
 require_once 'languages.php';
 
 // Set default language
@@ -25,13 +30,14 @@ $t = $languages[$current_lang];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($t['title']); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($t['meta_desc']); ?>">
+    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#0e0e0e">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="<?php echo htmlspecialchars($t['title']); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($t['meta_desc']); ?>">
-    <meta property="og:site_name" content="SnapSave">
+    <meta property="og:site_name" content="OmniClip">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
@@ -162,7 +168,7 @@ $t = $languages[$current_lang];
     <header class="p-6 w-full">
         <div class="max-w-6xl mx-auto flex justify-between items-center gap-4">
             <span class="text-2xl font-bold tracking-widest text-on-surface uppercase font-display shrink-0">
-                <a href="index.php" class="hover:text-primary transition-colors">SnapSave<span class="text-primary">.</span></a>
+                <a href="index.php?lang=<?php echo urlencode($current_lang); ?>" class="hover:text-primary transition-colors">OmniClip<span class="text-primary">.</span></a>
             </span>
 
             <div class="flex items-center space-x-3 md:space-x-6">
@@ -197,7 +203,8 @@ $t = $languages[$current_lang];
                 <!-- Language Selector Dropdown -->
                 <div class="relative group shrink-0">
                     <button
-                        class="flex items-center gap-2 bg-surface-container hover:bg-surface-container-high px-3.5 py-2 rounded-xl transition-all text-xs font-semibold text-on-surface border border-white/5">
+                        class="flex items-center gap-2 bg-surface-container hover:bg-surface-container-high px-3.5 py-2 rounded-xl transition-all text-xs font-semibold text-on-surface border border-white/5"
+                        aria-label="Select Language">
                         <span class="uppercase"><?php echo htmlspecialchars($current_lang); ?></span>
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-3.5 w-3.5 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24"
@@ -278,12 +285,14 @@ $t = $languages[$current_lang];
                         
                         <div class="absolute right-3 flex items-center space-x-1.5">
                             <button type="button" id="clearBtn" title="<?php echo htmlspecialchars($t['btn_clear']); ?>"
+                                aria-label="<?php echo htmlspecialchars($t['btn_clear']); ?>"
                                 class="hidden p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-bright transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                             <button type="button" id="pasteBtn"
+                                aria-label="<?php echo htmlspecialchars($t['btn_paste']); ?>"
                                 class="px-3.5 py-1.5 md:py-2 bg-surface-bright hover:bg-surface-container-high text-primary font-semibold text-xs md:text-sm rounded-full transition-all flex items-center gap-1.5 border border-primary/10">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -445,8 +454,8 @@ $t = $languages[$current_lang];
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <p class="text-on-surface-variant text-xs text-center md:text-left"><?php echo htmlspecialchars($t['footer_copyright']); ?></p>
             <div class="flex gap-6 text-xs text-on-surface-variant">
-                <a href="terms.php" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_terms']); ?></a>
-                <a href="privacy.php" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_privacy']); ?></a>
+                <a href="terms.php?lang=<?php echo urlencode($current_lang); ?>" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_terms']); ?></a>
+                <a href="privacy.php?lang=<?php echo urlencode($current_lang); ?>" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_privacy']); ?></a>
                 <a href="mailto:emprendedordigital1970@gmail.com" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_contact']); ?></a>
             </div>
         </div>
@@ -460,6 +469,10 @@ $t = $languages[$current_lang];
     <script>
         const translations = <?php echo json_encode($t, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
 
+        function escapeHtml(str) {
+            return $('<div>').text(str || '').html();
+        }
+
         function showToast(message, isError = false) {
             const toastId = 'toast-' + Date.now();
             const bgClass = isError ? 'bg-red-950/90 text-red-200 border-red-500/30' : 'bg-surface-bright/95 text-on-surface border-primary/30';
@@ -470,7 +483,7 @@ $t = $languages[$current_lang];
             const html = `
                 <div id="${toastId}" class="toast-msg ${bgClass} glass-morphism border px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-md mb-3 translate-y-4 opacity-0">
                     ${icon}
-                    <span class="text-xs md:text-sm font-medium leading-snug">${message}</span>
+                    <span class="text-xs md:text-sm font-medium leading-snug">${escapeHtml(message)}</span>
                 </div>
             `;
 
@@ -483,6 +496,33 @@ $t = $languages[$current_lang];
                 $(`#${toastId}`).addClass('translate-y-4 opacity-0');
                 setTimeout(() => { $(`#${toastId}`).remove(); }, 300);
             }, 4000);
+        }
+
+        // Robust copy helper with textarea fallback
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                return new Promise((resolve, reject) => {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-999999px";
+                    textArea.style.top = "-999999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        const successful = document.execCommand('copy');
+                        textArea.remove();
+                        if (successful) resolve();
+                        else reject(new Error('execCommand failed'));
+                    } catch (err) {
+                        textArea.remove();
+                        reject(err);
+                    }
+                });
+            }
         }
 
         // Auto-detect platform from pasted or typed URL
@@ -525,6 +565,15 @@ $t = $languages[$current_lang];
             const $videoPlayer = $('#videoPlayer');
             const $platformBadge = $('#platformBadge');
             let isPreviewOpen = false;
+
+            // Prevent default jump when download link is unpopulated
+            $downloadLink.on('click', function (e) {
+                const href = $(this).attr('href');
+                if (!href || href === '#') {
+                    e.preventDefault();
+                    $urlInput.focus();
+                }
+            });
 
             // Input listener with automatic platform detection
             $urlInput.on('input', function () {
@@ -616,15 +665,14 @@ $t = $languages[$current_lang];
                     url: 'api.php',
                     method: 'POST',
                     contentType: 'application/json',
+                    dataType: 'json',
+                    timeout: 35000,
                     data: JSON.stringify({ url: url }),
                     success: function (data) {
                         if (!data.status && data.error) {
-                            showToast((translations.js_alert_prefix || 'Error: ') + (data.message || data.error), true);
+                            showToast((translations.js_alert_prefix || 'Error: ') + (data.error || data.message), true);
                         } else if (data.result && data.result.length > 0) {
                             const result = data.result[0];
-
-                            // Resolve relative URL robustly regardless of subdirectory hosting
-                            const fullDownloadUrl = new URL(result.url, window.location.href).href;
 
                             $videoThumb.attr('src', result.thumb || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff8aa5\' stroke-width=\'1.5\'><rect x=\'2\' y=\'2\' width=\'20\' height=\'20\' rx=\'5\'/><path d=\'M10 8l6 4-6 4V8z\'/></svg>');
                             $downloadLink.attr('href', result.url);
@@ -640,16 +688,25 @@ $t = $languages[$current_lang];
                             }
 
                             // Quality and platform badges
-                            const platformName = (data.platform || 'VIDEO').toUpperCase();
+                            const isImage = data.is_image || (result.type && result.type.startsWith('image/'));
+                            const platformName = (data.platform || (isImage ? 'IMAGE' : 'VIDEO')).toUpperCase();
                             $platformBadge.text(platformName);
                             setActivePlatformTab(data.platform);
 
-                            const quality = data.quality || result.quality || 'HD (MP4)';
+                            const quality = data.quality || result.quality || (isImage ? 'HD (Image)' : 'HD (MP4)');
                             $qualityBadge.text(quality);
                             $qualityText.text((translations.quality || 'Quality: ') + quality);
 
-                            // Configure video player preview source
-                            $videoPlayer.attr('src', result.url);
+                            // Configure video player preview source (using inline stream mode)
+                            if (isImage) {
+                                $previewBtn.addClass('hidden');
+                            } else {
+                                $previewBtn.removeClass('hidden');
+                                $videoPlayer.attr('src', result.url + '&inline=1');
+                                if ($videoPlayer[0].load) {
+                                    $videoPlayer[0].load();
+                                }
+                            }
 
                             $resultCard.removeClass('hidden');
                             $('html, body').animate({
@@ -659,9 +716,15 @@ $t = $languages[$current_lang];
                             showToast(translations.js_alert_error, true);
                         }
                     },
-                    error: function (err) {
-                        console.error("SnapSave AJAX Error:", err);
-                        showToast(translations.js_alert_error, true);
+                    error: function (xhr, status, err) {
+                        let errMsg = translations.js_alert_error;
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errMsg = xhr.responseJSON.error;
+                        } else if (status === 'timeout') {
+                            errMsg = 'The request timed out. Please check the link and try again.';
+                        }
+                        console.error("OmniClip AJAX Error:", err || status);
+                        showToast((translations.js_alert_prefix || 'Error: ') + errMsg, true);
                     },
                     complete: function () {
                         $loading.addClass('hidden');
@@ -697,15 +760,11 @@ $t = $languages[$current_lang];
                 const targetUrl = $downloadLink.attr('href');
                 if (targetUrl && targetUrl !== '#') {
                     const fullUrl = new URL(targetUrl, window.location.href).href;
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(fullUrl).then(() => {
-                            showToast(translations.toast_copied);
-                        }).catch(() => {
-                            showToast(translations.toast_copied);
-                        });
-                    } else {
+                    copyTextToClipboard(fullUrl).then(() => {
                         showToast(translations.toast_copied);
-                    }
+                    }).catch(() => {
+                        showToast(translations.toast_copied);
+                    });
                 }
             });
 

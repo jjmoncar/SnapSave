@@ -1,5 +1,10 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_samesite', 'Lax');
+    session_start();
+}
 require_once 'languages.php';
 
 $default_lang = 'en';
@@ -22,6 +27,8 @@ $t = $languages[$current_lang];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($t['terms_title']); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($t['meta_desc']); ?>">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0e0e0e">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff8aa5'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z'/></svg>">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -85,16 +92,16 @@ $t = $languages[$current_lang];
     <nav class="p-6">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <span class="text-2xl font-bold tracking-widest text-on-surface uppercase font-display">
-                <a href="index.php" class="hover:text-primary transition-colors">SnapSave<span class="text-primary">.</span></a>
+                <a href="index.php?lang=<?php echo urlencode($current_lang); ?>" class="hover:text-primary transition-colors">OmniClip<span class="text-primary">.</span></a>
             </span>
             <div class="flex items-center space-x-4">
-                <a href="index.php" class="text-sm font-semibold text-primary hover:brightness-125 transition-all flex items-center gap-1.5">
+                <a href="index.php?lang=<?php echo urlencode($current_lang); ?>" class="text-sm font-semibold text-primary hover:brightness-125 transition-all flex items-center gap-1.5">
                     <?php echo htmlspecialchars($t['back_to_home']); ?>
                 </a>
 
                 <!-- Language Selector -->
                 <div class="relative group">
-                    <button class="flex items-center gap-2 bg-surface-container hover:bg-surface-container-high px-3.5 py-1.5 rounded-xl transition-all text-xs font-semibold text-on-surface">
+                    <button class="flex items-center gap-2 bg-surface-container hover:bg-surface-container-high px-3.5 py-1.5 rounded-xl transition-all text-xs font-semibold text-on-surface" aria-label="Select Language">
                         <span class="uppercase"><?php echo htmlspecialchars($current_lang); ?></span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -168,8 +175,8 @@ $t = $languages[$current_lang];
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <p class="text-on-surface-variant text-xs text-center md:text-left"><?php echo htmlspecialchars($t['footer_copyright']); ?></p>
             <div class="flex gap-6 text-xs text-on-surface-variant">
-                <a href="terms.php" class="text-primary font-bold transition-colors"><?php echo htmlspecialchars($t['footer_terms']); ?></a>
-                <a href="privacy.php" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_privacy']); ?></a>
+                <a href="terms.php?lang=<?php echo urlencode($current_lang); ?>" class="text-primary font-bold transition-colors"><?php echo htmlspecialchars($t['footer_terms']); ?></a>
+                <a href="privacy.php?lang=<?php echo urlencode($current_lang); ?>" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_privacy']); ?></a>
                 <a href="mailto:emprendedordigital1970@gmail.com" class="hover:text-on-surface transition-colors"><?php echo htmlspecialchars($t['footer_contact']); ?></a>
             </div>
         </div>
@@ -177,4 +184,3 @@ $t = $languages[$current_lang];
 </body>
 
 </html>
-

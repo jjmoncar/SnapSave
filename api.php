@@ -10,8 +10,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit;
 }
 
-// Configuración de RapidAPI Keys y Hosts (permite variable de entorno)
-$RAPIDAPI_KEY = getenv('RAPIDAPI_KEY') ?: "d374ccf789mshf6309148d5d9351p1935e0jsnd3b3dc8d455e";
+// Configuración de RapidAPI Keys y Hosts (permite variables de entorno en getenv, $_ENV o $_SERVER)
+$RAPIDAPI_KEY = getenv('RAPIDAPI_KEY') ?: ($_ENV['RAPIDAPI_KEY'] ?? ($_SERVER['RAPIDAPI_KEY'] ?? "d374ccf789mshf6309148d5d9351p1935e0jsnd3b3dc8d455e"));
 $SMVD_HOST = "social-media-video-downloader.p.rapidapi.com";
 $YT_HOST = "yt-api.p.rapidapi.com";
 $TWITTER_HOST = "twitter-x-video-downloader-api.p.rapidapi.com";
@@ -49,7 +49,7 @@ $apiUrl = '';
 $apiHost = '';
 $parsedTitle = null;
 
-// Detección por Plataforma
+// Detección y normalización por plataforma
 if (preg_match('/(?:youtube\.com|youtu\.be)/i', $url)) {
     $platform = 'youtube';
     $videoId = '';
@@ -71,6 +71,8 @@ if (preg_match('/(?:youtube\.com|youtu\.be)/i', $url)) {
 } elseif (preg_match('/(?:twitter\.com|x\.com|fixupx\.com|vxtwitter\.com)/i', $url)) {
     $platform = 'twitter';
     $cleanUrl = strtok($url, '?');
+    // Normalizar enlaces auxiliares fixupx / vxtwitter hacia x.com
+    $cleanUrl = preg_replace('/^(https?:\/\/)(?:www\.)?(?:fixupx\.com|vxtwitter\.com)/i', '$1x.com', $cleanUrl);
     $apiHost = $TWITTER_HOST;
     $apiUrl = "https://$TWITTER_HOST/download?link=" . urlencode($cleanUrl) . "&url=" . urlencode($cleanUrl);
 } elseif (preg_match('/(?:instagram\.com|instagr\.am)/i', $url)) {
@@ -88,7 +90,7 @@ if (preg_match('/(?:youtube\.com|youtu\.be)/i', $url)) {
     if (!$shortcode) {
         echo json_encode([
             'status' => false,
-            'error' => 'Could not extract valid Instagram post shortcode.'
+            'error' => 'Could not extract a valid Instagram post shortcode.'
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -125,7 +127,7 @@ curl_setopt_array($curl, [
         "X-RapidAPI-Host: $apiHost",
         "X-RapidAPI-Key: $RAPIDAPI_KEY",
         "Accept: application/json",
-        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) SnapSave/2.0"
+        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) OmniClip/2.0"
     ],
 ]);
 
@@ -153,16 +155,30 @@ if (!$data) {
     exit;
 }
 
-// Si la API devuelve error explícito
+// Manejo de errores HTTP upstream (cuotas agotadas, claves inválidas, etc.)
+if ($httpCode >= 400) {
+    $errMsg = $data['message'] ?? ($data['error'] ?? "Upstream API error (HTTP $httpCode)");
+    if (is_array($errMsg)) {
+        $errMsg = $errMsg['message'] ?? json_encode($errMsg);
+    }
+    echo json_encode([
+        'status' => false,
+        'error' => 'API Error: ' . $errMsg,
+        'http_code' => $httpCode
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// Si la API devuelve error explícito en el cuerpo JSON
 if (isset($data['success']) && $data['success'] === false) {
     $errMsg = $data['message'] ?? ($data['error'] ?? 'API request failed');
-    echo json_encode(['status' => false, 'error' => 'API Error: ' . $errMsg]);
+    echo json_encode(['status' => false, 'error' => 'API Error: ' . (is_string($errMsg) ? $errMsg : json_encode($errMsg))]);
     exit;
 }
 
 if (isset($data['status']) && ($data['status'] === false || $data['status'] === 'fail')) {
     $errMsg = $data['message'] ?? ($data['error'] ?? 'API status false');
-    echo json_encode(['status' => false, 'error' => 'API Error: ' . $errMsg]);
+    echo json_encode(['status' => false, 'error' => 'API Error: ' . (is_string($errMsg) ? $errMsg : json_encode($errMsg))]);
     exit;
 }
 
@@ -174,17 +190,22 @@ if (isset($data['error']) && is_array($data['error']) && isset($data['error']['m
 $rawVideo = null;
 $rawThumb = null;
 $qualityLabel = 'HD (MP4)';
+$isMediaImage = false;
 
 if ($platform === 'youtube') {
     $parsedTitle = $data['title'] ?? null;
     
-    // Buscar el formato MP4 con mejor calidad con audio incluido
+    // Buscar el formato MP4 con mejor resolución con audio incluido (no sólo el primero)
     if (!empty($data['formats'])) {
+        $bestHeight = 0;
         foreach ($data['formats'] as $fmt) {
             if (!empty($fmt['url']) && strpos($fmt['mimeType'] ?? '', 'video/mp4') !== false) {
-                $rawVideo = $fmt['url'];
-                $qualityLabel = $fmt['qualityLabel'] ?? 'HD (MP4)';
-                break;
+                $height = (int)($fmt['height'] ?? (preg_match('/(\d+)p/i', $fmt['qualityLabel'] ?? '', $m) ? $m[1] : 0));
+                if ($height >= $bestHeight) {
+                    $bestHeight = $height;
+                    $rawVideo = $fmt['url'];
+                    $qualityLabel = $fmt['qualityLabel'] ?? ($height ? "{$height}p (MP4)" : 'HD (MP4)');
+                }
             }
         }
         if (!$rawVideo && isset($data['formats'][0]['url'])) {
@@ -192,11 +213,15 @@ if ($platform === 'youtube') {
             $qualityLabel = $data['formats'][0]['qualityLabel'] ?? 'HD (MP4)';
         }
     } elseif (!empty($data['adaptiveFormats'])) {
+        $bestHeight = 0;
         foreach ($data['adaptiveFormats'] as $fmt) {
             if (!empty($fmt['url']) && strpos($fmt['mimeType'] ?? '', 'video/mp4') !== false) {
-                $rawVideo = $fmt['url'];
-                $qualityLabel = $fmt['qualityLabel'] ?? 'HD (MP4)';
-                break;
+                $height = (int)($fmt['height'] ?? (preg_match('/(\d+)p/i', $fmt['qualityLabel'] ?? '', $m) ? $m[1] : 0));
+                if ($height >= $bestHeight) {
+                    $bestHeight = $height;
+                    $rawVideo = $fmt['url'];
+                    $qualityLabel = $fmt['qualityLabel'] ?? ($height ? "{$height}p (MP4)" : 'HD (MP4)');
+                }
             }
         }
     }
@@ -209,12 +234,16 @@ if ($platform === 'youtube') {
     $tData = $data['data'] ?? $data;
     $parsedTitle = $tData['text'] ?? ($tData['title'] ?? ($tData['description'] ?? null));
     
-    // Seleccionar el video de mayor resolución/bitrate si hay varios
+    // Seleccionar el video de mayor resolución/bitrate si hay varios (evitando playlists .m3u8)
     if (!empty($tData['videos'])) {
         $bestBitrate = -1;
         foreach ($tData['videos'] as $v) {
             if (!empty($v['url'])) {
-                $bitrate = $v['bitrate'] ?? 0;
+                // Evitar playlist HLS si hay stream MP4 directo
+                if (strpos($v['url'], '.m3u8') !== false && $rawVideo) {
+                    continue;
+                }
+                $bitrate = (int)($v['bitrate'] ?? 0);
                 if ($bitrate >= $bestBitrate) {
                     $bestBitrate = $bitrate;
                     $rawVideo = $v['url'];
@@ -253,6 +282,15 @@ if ($platform === 'youtube') {
         $rawVideo = $data['contents'][0]['url'];
         $rawThumb = $data['contents'][0]['thumbnailUrl'] ?? ($data['metadata']['thumbnailUrl'] ?? null);
         $parsedTitle = $data['metadata']['caption'] ?? null;
+    } elseif (!empty($data['data']['play'])) {
+        // Esquema TikWM / TikTok sin marca de agua
+        $rawVideo = $data['data']['play'];
+        $rawThumb = $data['data']['cover'] ?? ($data['data']['origin_cover'] ?? null);
+        $parsedTitle = $data['data']['title'] ?? null;
+    } elseif (!empty($data['play'])) {
+        $rawVideo = $data['play'];
+        $rawThumb = $data['cover'] ?? null;
+        $parsedTitle = $data['title'] ?? null;
     } elseif (!empty($data['result'])) {
         if (is_array($data['result'])) {
             $firstResult = $data['result'][0] ?? null;
@@ -279,15 +317,43 @@ if ($platform === 'youtube') {
         $rawVideo = $data['data']['video_url'];
         $rawThumb = $data['data']['cover'] ?? null;
         $parsedTitle = $data['data']['title'] ?? null;
+    } elseif (!empty($data['data']['videos'][0]['url'])) {
+        $rawVideo = $data['data']['videos'][0]['url'];
+        $rawThumb = $data['data']['thumbnail'] ?? ($data['data']['cover'] ?? null);
+        $parsedTitle = $data['data']['title'] ?? null;
+    }
+}
+
+// Soporte complementario para publicaciones de imágenes (por ejemplo fotos de Instagram)
+if (!$rawVideo) {
+    if (!empty($data['contents'][0]['images'][0]['url'])) {
+        $rawVideo = $data['contents'][0]['images'][0]['url'];
+        $rawThumb = $rawVideo;
+        $parsedTitle = $data['metadata']['caption'] ?? null;
+        $isMediaImage = true;
+        $qualityLabel = 'HD (Image)';
+    } elseif (!empty($data['data']['image_url'])) {
+        $rawVideo = $data['data']['image_url'];
+        $rawThumb = $rawVideo;
+        $parsedTitle = $data['data']['title'] ?? null;
+        $isMediaImage = true;
+        $qualityLabel = 'HD (Image)';
+    } elseif (!empty($data['images'][0])) {
+        $rawVideo = is_array($data['images'][0]) ? ($data['images'][0]['url'] ?? null) : $data['images'][0];
+        $rawThumb = $rawVideo;
+        $isMediaImage = true;
+        $qualityLabel = 'HD (Image)';
     }
 }
 
 if ($rawVideo) {
     $randomSuffix = bin2hex(random_bytes(5));
-    $safePlatform = preg_replace('/[^a-z0-9]/i', '', $platform ?: 'video');
-    $cleanFilename = "SnapSave_{$safePlatform}_{$randomSuffix}.mp4";
+    $safePlatform = preg_replace('/[^a-z0-9]/i', '', $platform ?: 'media');
+    $extension = $isMediaImage ? 'jpg' : 'mp4';
+    $mimeType = $isMediaImage ? 'image/jpeg' : 'video/mp4';
+    $cleanFilename = "OmniClip_{$safePlatform}_{$randomSuffix}.{$extension}";
     
-    $videoProxy = "download.php?url=" . urlencode($rawVideo) . "&filename=" . urlencode($cleanFilename);
+    $videoProxy = "download.php?url=" . urlencode($rawVideo) . "&filename=" . urlencode($cleanFilename) . ($isMediaImage ? "&isImage=true" : "");
     $thumbProxy = $rawThumb ? "download.php?url=" . urlencode($rawThumb) . "&isImage=true" : null;
     
     echo json_encode([
@@ -295,13 +361,14 @@ if ($rawVideo) {
         'platform' => $platform,
         'title' => $parsedTitle,
         'quality' => $qualityLabel,
+        'is_image' => $isMediaImage,
         'result' => [[
             'url' => $videoProxy,
             'thumb' => $thumbProxy,
             'raw_video' => $rawVideo,
             'filename' => $cleanFilename,
             'quality' => $qualityLabel,
-            'type' => 'video/mp4'
+            'type' => $mimeType
         ]]
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 } else {
@@ -312,6 +379,3 @@ if ($rawVideo) {
         'platform' => $platform
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
-
-
-

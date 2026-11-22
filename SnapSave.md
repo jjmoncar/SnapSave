@@ -1,80 +1,49 @@
-# Proyecto: Web Responsive para Descargar Videos de Instagram
+# Proyecto: OmniClip - Web Responsive para Descargar Videos y Multimedia
 
 ## 📱 Descripción General
-Crea una página web responsive que se adapte tanto a celulares (dispositivos móviles con diferentes tamaños de pantalla) como a tablets, capaz de realizar descargas de videos de Instagram.
+OmniClip es una aplicación web responsive adaptada a celulares, tablets y computadoras de escritorio, capaz de analizar y descargar videos en alta definición (HD) y multimedia desde múltiples plataformas: Twitter (X), Instagram, TikTok, Facebook y YouTube.
 
 ---
 
 ## ⚙️ Funcionamiento de la Web
 
-1. El usuario pega el link de Instagram.
-2. El sitio envía ese link a una API.
-3. La API devuelve el enlace directo al archivo de video (sin marca de agua).
-4. El sitio muestra al usuario un botón **"Descargar"**.
+1. El usuario pega el enlace de Twitter (X), Instagram, TikTok, Facebook o YouTube.
+2. El sitio detecta automáticamente la plataforma y envía la petición a la API backend (`api.php`).
+3. La API procesa el enlace y obtiene la mejor calidad de stream disponible.
+4. El usuario puede:
+   - Descargar el archivo directamente a través del proxy seguro (`download.php`).
+   - Previsualizar el video directamente en el reproductor HTML5 integrado.
+   - Copiar el enlace directo de descarga al portapapeles.
 
 ---
 
 ## 🔌 Librerías y APIs
 
-- **RapidAPI**  
-  Busca APIs como:
-  - "TikTok Downloader"
-  - "Instagram Media Downloader"
+- **RapidAPI**
+  - YouTube Data & Stream API
+  - Twitter / X Media Downloader API
+  - Social Media Video Downloader API (Instagram, TikTok, Facebook)
 
 ---
 
 ## 🧱 Stack de Desarrollo
 
 - **Frontend**
-  - HTML5  
-  - Tailwind CSS  
-  - JavaScript  
-  *(Para un diseño moderno y profesional)*
+  - HTML5 Semántico
+  - Tailwind CSS (Diseño "Hyper-Luxe Prism", Glassmorphism y temas oscuros)
+  - JavaScript (ES6+ y jQuery)
 
 - **Backend**
-  - Node.js (Express)  
-  *(Ideal para manejar múltiples peticiones simultáneas de descarga)*
+  - PHP 8+
+  - cURL con streaming continuo y protecciones avanzadas contra SSRF y Header Injection.
 
 ---
 
 ## 🎯 Estructura del Sitio (UX)
 
-Un diseño simple, directo al grano:
-
-- Un título llamativo  
-  > Ej: **"SnapSave - Descarga videos de Instagram HD"**
-
-- Una caja de texto grande para pegar la URL
-- Un botón de **"Descargar"** brillante y visible
-- Espacios publicitarios estratégicos  
-  *(Sin bloquear el botón principal para evitar penalizaciones, incluso usando Adsterra)*
-
----
-
-## 💰 Estrategia de Monetización y Publicidad
-
-Coloca anuncios en los momentos de mayor atención del usuario:
-
-### 1. Social Bar
-- Aparece justo cuando el usuario pega el link.
-
-### 2. Popunder
-- Se activa cuando el usuario hace clic en:
-  - "Analizar"
-  - "Descargar"
-- 💸 Es el formato que más paga en este nicho.
-
-### 3. Banners Nativos
-- Uno debajo del input de la URL.
-- Otro debajo del botón de descarga final.
-
-### 4. Interstitials
-- Pantalla completa antes de iniciar la descarga del archivo.
-
----
-
-## 🚀 Nota Final
-
-La clave no está solo en que funcione…  
-Está en que fluya.  
-Que el usuario no piense — solo haga clic.
+- Encabezado con branding moderno: **OmniClip**
+- Barra de pestañas para filtrado o detección rápida por plataforma
+- Selector de idioma multilenguaje (Inglés, Español, Portugués, Francés)
+- Input inteligente con botones de Pegar desde portapapeles y Limpiar
+- Tarjeta de resultado con thumbnail, título, badge de calidad HD y reproductor de video
+- Botón de apoyo voluntario mediante PayPal
